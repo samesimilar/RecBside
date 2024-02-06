@@ -1,0 +1,2 @@
+#N canvas 323 476 872 568 12;
+#X obj 38 36 RecBsideConfig /sdcard/recbside;
