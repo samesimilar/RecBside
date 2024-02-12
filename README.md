@@ -1,4 +1,4 @@
-# RecBside v0.1
+# RecBside
 ## A Recording mod for Organelle
 ### By Michael Spears <mws@samesimilar.com>
 ### The author graciously acknowledges the contributions of the authors of pdbuilder, HID, readdir, mother.pd, PureData, and more, which make RecBside possible.
