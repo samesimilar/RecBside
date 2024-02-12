@@ -70,4 +70,7 @@ If RecBside is installed in a patch, press 'spacebar' on the USB keyboard it was
 You should also see a flashing recording indicator (during recording) in the top-right of the Organelle's OLED screen. This is not guaranteed to work well with every patch, though, since that screen space is not reserved.
 
 
-
+This program is distributed in the hope that it will be useful,   
+but WITHOUT ANY WARRANTY; without even the implied warranty of    
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     
+GNU General Public License for more details. 
