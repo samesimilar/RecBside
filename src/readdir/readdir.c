@@ -54,7 +54,7 @@
 #ifdef READDIR_DEBUG
 // error-message buffer
 #define EBUFSIZE 256
-static char readdir_errbuf[EBUFSIZE];
+static char readdir_organelle_errbuf[EBUFSIZE];
 #endif
 
 /*=====================================================================
@@ -66,9 +66,9 @@ static char readdir_errbuf[EBUFSIZE];
 //   "readdir: simple directory accessor v" PACKAGE_VERSION " by Bryan Jurish\n"
 //   "readdir: compiled by " PACKAGE_BUILD_USER " on " PACKAGE_BUILD_DATE ;
 
-static t_class *readdir_class;
+static t_class *readdir_organelle_class;
 
-typedef struct _readdir
+typedef struct _readdir_organelle
 {
   t_object       x_obj;
   DIR           *x_dir;         //-- current directory
@@ -77,7 +77,7 @@ typedef struct _readdir
   t_atom         x_eatom;       //-- current output atom (symbol)
   t_outlet      *x_ent_outlet;  //-- entry outlet
   t_outlet      *x_eod_outlet;  //-- end-of-directory outlet
-} t_readdir;
+} t_readdir_organelle;
 
 /*=====================================================================
  * Constants
@@ -94,11 +94,11 @@ static t_symbol *sp_blkdev;
 /*--------------------------------------------------------------------
  * close
  */
-static void readdir_close(t_readdir *x)
+static void readdir_organelle_close(t_readdir_organelle *x)
 {
   if (!x->x_dir) return;
   if (0 != closedir(x->x_dir)) {
-    pd_error(x, "readdir: cannot close %s: %s", x->x_dirname->s_name, strerror(errno));
+    pd_error(x, "readdir_organelle: cannot close %s: %s", x->x_dirname->s_name, strerror(errno));
     return;
   }
   x->x_dir = NULL;
@@ -108,15 +108,15 @@ static void readdir_close(t_readdir *x)
 /*--------------------------------------------------------------------
  * open DIR
  */
-static void readdir_open(t_readdir *x, t_symbol *dirname)
+static void readdir_organelle_open(t_readdir_organelle *x, t_symbol *dirname)
 {
 #ifdef READDIR_DEBUG
-  post("readdir: got message: open %s", dirname->s_name);
+  post("readdir_organelle: got message: open %s", dirname->s_name);
 #endif
 
-  if (x->x_dir) readdir_close(x);
+  if (x->x_dir) readdir_organelle_close(x);
   if ( !(x->x_dir = opendir(dirname->s_name)) ) {
-    pd_error(x, "readdir: cannot open %s: %s", dirname->s_name, strerror(errno));
+    pd_error(x, "readdir_organelle: cannot open %s: %s", dirname->s_name, strerror(errno));
     return;
   }
   x->x_dirname = dirname;
@@ -125,14 +125,14 @@ static void readdir_open(t_readdir *x, t_symbol *dirname)
 /*--------------------------------------------------------------------
  * next : get next entry
  */
-static void readdir_next(t_readdir *x)
+static void readdir_organelle_next(t_readdir_organelle *x)
 {
   t_symbol *sel = sp_unknown;
   struct dirent *result = NULL;
   if ( !x->x_dir || !(result = readdir(x->x_dir)) ) {
     if (errno == EBADF) {
       //-- real error
-      pd_error(x, "readdir: cannot read from %s: %s", x->x_dirname->s_name, strerror(errno));
+      pd_error(x, "readdir_organelle: cannot read from %s: %s", x->x_dirname->s_name, strerror(errno));
     }
     else {
       //-- end of directory
@@ -180,7 +180,7 @@ static void readdir_next(t_readdir *x)
 /*--------------------------------------------------------------------
  * rewind
  */
-static void readdir_rewind(t_readdir *x)
+static void readdir_organelle_rewind(t_readdir_organelle *x)
 {
   if (x->x_dir) rewinddir(x->x_dir);
 }
@@ -188,12 +188,12 @@ static void readdir_rewind(t_readdir *x)
 /*--------------------------------------------------------------------
  * tell
  */
-static void readdir_tell(t_readdir *x)
+static void readdir_organelle_tell(t_readdir_organelle *x)
 {
   off_t off = 0;
   if (x->x_dir) off = telldir(x->x_dir);
 #ifdef READDIR_DEBUG
-  post("readdir_tell(): off: %%d=%d, %%f=%f\n", off, (t_float)off);
+  post("readdir_organelle_tell(): off: %%d=%d, %%f=%f\n", off, (t_float)off);
 #endif
   outlet_float(x->x_ent_outlet, (t_float)off);
 }
@@ -201,10 +201,10 @@ static void readdir_tell(t_readdir *x)
 /*--------------------------------------------------------------------
  * seek FLOAT
  */
-static void readdir_seek(t_readdir *x, t_floatarg pos)
+static void readdir_organelle_seek(t_readdir_organelle *x, t_floatarg pos)
 {
   if (!x->x_dir) {
-    pd_error(x, "readdir: seek %g: no directory opened!", pos);
+    pd_error(x, "readdir_organelle: seek %g: no directory opened!", pos);
     return;
   }
   seekdir(x->x_dir, (off_t)pos);
@@ -214,9 +214,9 @@ static void readdir_seek(t_readdir *x, t_floatarg pos)
 /*--------------------------------------------------------------------
  * new
  */
-static void *readdir_new(void)
+static void *readdir_organelle_new(void)
 {
-    t_readdir *x = (t_readdir *)pd_new(readdir_class);
+    t_readdir_organelle *x = (t_readdir_organelle *)pd_new(readdir_organelle_class);
 
     //-- defaults
     x->x_dir = NULL;
@@ -233,9 +233,9 @@ static void *readdir_new(void)
 /*--------------------------------------------------------------------
  * free
  */
-static void readdir_free(t_readdir *x)
+static void readdir_organelle_free(t_readdir_organelle *x)
 {
-  readdir_close(x);
+  readdir_organelle_close(x);
   outlet_free(x->x_ent_outlet);
   outlet_free(x->x_eod_outlet);
   return;
@@ -244,11 +244,11 @@ static void readdir_free(t_readdir *x)
 /*--------------------------------------------------------------------
  * setup
  */
-void readdir_setup(void)
+void readdir_organelle_setup(void)
 {
   // post(readdir_banner);
 #ifdef READDIR_DEBUG
-  post("readdir: debugging enabled");
+  post("readdir_organelle: debugging enabled");
 #endif
 
   //-- constants
@@ -262,21 +262,21 @@ void readdir_setup(void)
   sp_blkdev = gensym("blkdev");
 
   //-- class
-  readdir_class = class_new(gensym("readdir"),
-			    (t_newmethod)readdir_new,
-			    (t_method)readdir_free,
-			    sizeof(t_readdir),
+  readdir_organelle_class = class_new(gensym("readdir_organelle"),
+			    (t_newmethod)readdir_organelle_new,
+			    (t_method)readdir_organelle_free,
+			    sizeof(t_readdir_organelle),
 			    CLASS_DEFAULT,
 			    0);
   
   //-- methods
-  class_addmethod(readdir_class, (t_method)readdir_open, gensym("open"), A_DEFSYMBOL, 0);
-  class_addmethod(readdir_class, (t_method)readdir_close, gensym("close"), 0);
-  class_addmethod(readdir_class, (t_method)readdir_next, gensym("next"), 0);
-  class_addbang(readdir_class, (t_method)readdir_next);
-  class_addmethod(readdir_class, (t_method)readdir_rewind, gensym("rewind"), 0);
-  class_addmethod(readdir_class, (t_method)readdir_tell, gensym("tell"), 0);
-  class_addmethod(readdir_class, (t_method)readdir_seek, gensym("seek"), A_DEFFLOAT, 0);
+  class_addmethod(readdir_organelle_class, (t_method)readdir_organelle_open, gensym("open"), A_DEFSYMBOL, 0);
+  class_addmethod(readdir_organelle_class, (t_method)readdir_organelle_close, gensym("close"), 0);
+  class_addmethod(readdir_organelle_class, (t_method)readdir_organelle_next, gensym("next"), 0);
+  class_addbang(readdir_organelle_class, (t_method)readdir_organelle_next);
+  class_addmethod(readdir_organelle_class, (t_method)readdir_organelle_rewind, gensym("rewind"), 0);
+  class_addmethod(readdir_organelle_class, (t_method)readdir_organelle_tell, gensym("tell"), 0);
+  class_addmethod(readdir_organelle_class, (t_method)readdir_organelle_seek, gensym("seek"), A_DEFFLOAT, 0);
   
   //-- help symbol
   // class_sethelpsymbol(readdir_class, gensym("readdir-help.pd"));

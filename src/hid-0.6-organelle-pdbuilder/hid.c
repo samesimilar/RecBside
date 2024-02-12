@@ -41,21 +41,21 @@
  * FUNCTION PROTOTYPES
  */
 
-void hid_start(t_hid *x, t_float f);
-void hid_stop(t_hid *x);
-t_int hid_open(t_hid *x, t_symbol *s);
-t_int hid_close(t_hid *x);
-t_int hid_read(t_hid *x,int fd);
-static void hid_float(t_hid* x, t_floatarg f);
+void hid_grabber_start(t_hid_grabber *x, t_float f);
+void hid_grabber_stop(t_hid_grabber *x);
+t_int hid_grabber_open(t_hid_grabber *x, t_symbol *s);
+t_int hid_grabber_close(t_hid_grabber *x);
+t_int hid_grabber_read(t_hid_grabber *x,int fd);
+static void hid_grabber_float(t_hid_grabber* x, t_floatarg f);
 // MWS
-t_int hid_grab(t_hid *x);
-t_int hid_ungrab(t_hid *x);
+t_int hid_grabber_grab(t_hid_grabber *x);
+t_int hid_grabber_ungrab(t_hid_grabber *x);
 
 /*------------------------------------------------------------------------------
  * SUPPORT FUNCTIONS
  */
 
-void hid_output_event(t_hid *x, char *type, char *code, t_float value)
+void hid_grabber_output_event(t_hid_grabber *x, char *type, char *code, t_float value)
 {
 	t_atom event_data[3];
 	
@@ -66,23 +66,23 @@ void hid_output_event(t_hid *x, char *type, char *code, t_float value)
 	outlet_anything(x->x_data_outlet,atom_gensym(event_data),2,event_data+1);
 }
 
-void hid_set_from_float(t_hid *x, t_floatarg f)
+void hid_grabber_set_from_float(t_hid_grabber *x, t_floatarg f)
 {
 /* values greater than 1 set the polling delay time */
 /* 1 and 0 for start/stop so you can use a [tgl] */
 	if (f > 1)
 	{
 		x->x_delay = (t_int)f;
-		hid_start(x,f);
+		hid_grabber_start(x,f);
 	}
 	else if (f == 1) 
 	{
 		if (! x->x_started)
-		hid_start(x,f);
+		hid_grabber_start(x,f);
 	}
 	else if (f == 0) 		
 	{
-		hid_stop(x);
+		hid_grabber_stop(x);
 	}
 }
 
@@ -91,34 +91,34 @@ void hid_set_from_float(t_hid *x, t_floatarg f)
  */
 
 /* stop polling the device */
-void hid_stop(t_hid* x) 
+void hid_grabber_stop(t_hid_grabber* x) 
 {
-  DEBUG(post("hid_stop"););
+  DEBUG(post("hid_grabber_stop"););
   
   if (x->x_started) 
   { 
 	  clock_unset(x->x_clock);
-	  DEBUG(post("[hid] polling stopped"););
+	  DEBUG(post("[hid_grabber] polling stopped"););
 	  x->x_started = 0;
   }
 }
 
 /* close the device */
-t_int hid_close(t_hid *x) 
+t_int hid_grabber_close(t_hid_grabber *x) 
 {
-	DEBUG(post("hid_close"););
+	DEBUG(post("hid_grabber_close"););
 
 /* just to be safe, stop it first */
-	hid_stop(x);	
+	hid_grabber_stop(x);	
 	//MWS
 	if (!x->x_device_open) {
 		return(0);
 	}
 	
-	hid_ungrab(x);
-	if(! hid_close_device(x)) 
+	hid_grabber_ungrab(x);
+	if(! hid_grabber_close_device(x)) 
 	{
-		post("[hid] closed device %s",x->x_device_name->s_name);
+		post("[hid_grabber] closed device %s",x->x_device_name->s_name);
 		x->x_device_open = 0;
 		return (0);
 	}
@@ -127,23 +127,23 @@ t_int hid_close(t_hid *x)
 }
 
 // MWS
-t_int hid_grab(t_hid *x)
+t_int hid_grabber_grab(t_hid_grabber *x)
 {
-	if (hid_grab_device(x)) {
-		error("[hid] couldn't grab device");
+	if (hid_grabber_grab_device(x)) {
+		error("[hid_grabber] couldn't grab device");
 		outlet_bang(x->x_null_outlet);
 		return 1;
 	} else {
-		post("[hid] grabbed device");
+		post("[hid_grabber] grabbed device");
 		return 0;
 	}
 	
 }
 // MWS
-t_int hid_ungrab(t_hid *x)
+t_int hid_grabber_ungrab(t_hid_grabber *x)
 {
-	if(hid_ungrab_device(x)) {
-		error("[hid] couldn't ungrab device");
+	if(hid_grabber_ungrab_device(x)) {
+		error("[hid_grabber] couldn't ungrab device");
 		outlet_bang(x->x_null_outlet);
 		return 1;
 	} else {
@@ -162,16 +162,16 @@ t_int hid_ungrab(t_hid *x)
  * open / different device       close open 
  */
 
-t_int hid_open(t_hid *x, t_symbol *s) 
+t_int hid_grabber_open(t_hid_grabber *x, t_symbol *s) 
 {
-	DEBUG(post("hid_open"););
+	DEBUG(post("hid_grabber_open"););
 
 /* store running state to be restored after the device has been opened */
 	t_int started = x->x_started;
 
 /* only close the device if its different than the current and open */	
 	if ( (s != x->x_device_name) && (x->x_device_open) ) 
-		hid_close(x);
+		hid_grabber_close(x);
 
 	// if (f > 0)
 	// 	x->x_device_number = f;
@@ -184,9 +184,9 @@ t_int hid_open(t_hid *x, t_symbol *s)
  * send a [close( msg, then an [open( msg. */
 	if (! x->x_device_open) 
 	{
-		if (hid_open_device(x,x->x_device_name))
+		if (hid_grabber_open_device(x,x->x_device_name))
 		{
-			error("[hid] can not open device %s",x->x_device_name->s_name);
+			error("[hid_grabber] can not open device %s",x->x_device_name->s_name);
 			outlet_bang(x->x_null_outlet);
 			return (1);
 		}
@@ -200,17 +200,17 @@ t_int hid_open(t_hid *x, t_symbol *s)
 /* restore the polling state so that when I [tgl] is used to start/stop [hid],
  * the [tgl]'s state will continue to accurately reflect [hid]'s state  */
 	if(started)
-		hid_set_from_float(x,x->x_delay);
+		hid_grabber_set_from_float(x,x->x_delay);
 
 	return (0);
 }
 
 
-t_int hid_read(t_hid *x,int fd) 
+t_int hid_grabber_read(t_hid_grabber *x,int fd) 
 {
 //	DEBUG(post("hid_read"););
 
-	hid_get_events(x);
+	hid_grabber_get_events(x);
 	
 	if (x->x_started) 
 	{
@@ -221,56 +221,56 @@ t_int hid_read(t_hid *x,int fd)
 	return 1; 
 }
 
-void hid_start(t_hid* x, t_float f) 
+void hid_grabber_start(t_hid_grabber* x, t_float f) 
 {
-	DEBUG(post("hid_start"););
+	DEBUG(post("hid_grabber_start"););
   
 /*	if the user sets the delay less than one, ignore */
 	if( f >= 1 ) 	
 		x->x_delay = (t_int)f;
 
 	if(!x->x_device_open)
-		hid_open(x,x->x_device_name);
+		hid_grabber_open(x,x->x_device_name);
 	
    if(!x->x_started) 
 	{
 		clock_delay(x->x_clock, x->x_delay);
-		DEBUG(post("[hid] polling started"););
+		DEBUG(post("[hid_grabber] polling started"););
 		x->x_started = 1;
 	} 
 }
 
-static void hid_float(t_hid* x, t_floatarg f) 
+static void hid_grabber_float(t_hid_grabber* x, t_floatarg f) 
 {
-	DEBUG(post("hid_float"););
+	DEBUG(post("hid_grabber_float"););
 
-	hid_set_from_float(x,f);
+	hid_grabber_set_from_float(x,f);
 }
 
 /* setup functions */
-static void hid_free(t_hid* x) 
+static void hid_grabber_free(t_hid_grabber* x) 
 {
-	DEBUG(post("hid_free"););
+	DEBUG(post("hid_grabber_free"););
 		
-	hid_close(x);
+	hid_grabber_close(x);
 	clock_free(x->x_clock);
-	hid_instance_count--;
+	hid_grabber_instance_count--;
 	outlet_free(x->x_null_outlet);
 	outlet_free(x->x_device_name_outlet);
 	outlet_free(x->x_data_outlet);
-	hid_platform_specific_free(x);
+	hid_grabber_platform_specific_free(x);
 }
 
 /* create a new instance of this class */
-static void *hid_new(void) 
+static void *hid_grabber_new(void) 
 {
-  t_hid *x = (t_hid *)pd_new(hid_class);
+  t_hid_grabber *x = (t_hid_grabber *)pd_new(hid_grabber_class);
 
-  DEBUG(post("hid_new"););
+  DEBUG(post("hid_grabber_new"););
 
 /* only display the version when the first instance is loaded */
-  if(!hid_instance_count) {
-	  post("[hid] %d.%d, written by Hans-Christoph Steiner <hans@eds.org>",
+  if(!hid_grabber_instance_count) {
+	  post("[hid_grabber] %d.%d, written by Hans-Christoph Steiner <hans@eds.org>",
 			 HID_MAJOR_VERSION, HID_MINOR_VERSION);  
 	  post("With modifications for Organelle by Michael Spears <samesimilar@gmail.com");
 	 }
@@ -288,7 +288,7 @@ static void *hid_new(void)
   x->x_delay = DEFAULT_DELAY;
   x->x_device_name = gensym("nodevice");
 
-  x->x_clock = clock_new(x, (t_method)hid_read);
+  x->x_clock = clock_new(x, (t_method)hid_grabber_read);
 
   /* create anything outlet used for HID data */ 
   x->x_data_outlet = outlet_new(&x->x_obj, 0);
@@ -296,7 +296,7 @@ static void *hid_new(void)
   x->x_null_outlet = outlet_new(&x->x_obj, &s_bang);
   
   /* find and report the list of devices */
-  hid_build_device_list(x);
+  hid_grabber_build_device_list(x);
   
   // Open the device and save settings.  If there is an error, return the object
   //  * anyway, so that the inlets and outlets are created, thus not breaking the
@@ -304,49 +304,49 @@ static void *hid_new(void)
   // if (hid_open(x,s))
 	//   error("[hid] device %s did not open",s->s_name);
 
-  hid_instance_count++;
+  hid_grabber_instance_count++;
 
   return (x);
 }
 
-void hid_setup(void) 
+void hid_grabber_setup(void) 
 {
-	DEBUG(post("hid_setup"););
-	hid_class = class_new(gensym("hid"), 
-								 (t_newmethod)hid_new, 
-								 (t_method)hid_free,
-								 sizeof(t_hid),
+	DEBUG(post("hid_grabber_setup"););
+	hid_grabber_class = class_new(gensym("hid_grabber"), 
+								 (t_newmethod)hid_grabber_new, 
+								 (t_method)hid_grabber_free,
+								 sizeof(t_hid_grabber),
 								 CLASS_DEFAULT, 0);
 	
 	/* add inlet datatype methods */
-	class_addfloat(hid_class,(t_method) hid_float);
-	class_addbang(hid_class,(t_method) hid_read);
+	class_addfloat(hid_grabber_class,(t_method) hid_grabber_float);
+	class_addbang(hid_grabber_class,(t_method) hid_grabber_read);
 	
 	/* add inlet message methods */
-	class_addmethod(hid_class,(t_method) hid_build_device_list,gensym("refresh"),0);
-	class_addmethod(hid_class,(t_method) hid_print,gensym("print"),0);
-	class_addmethod(hid_class,(t_method) hid_open,gensym("open"),A_SYMBOL,0);
-	class_addmethod(hid_class,(t_method) hid_close,gensym("close"),0);
-	class_addmethod(hid_class,(t_method) hid_start,gensym("start"),A_DEFFLOAT,0);
-	class_addmethod(hid_class,(t_method) hid_start,gensym("poll"),A_DEFFLOAT,0);
-	class_addmethod(hid_class,(t_method) hid_stop,gensym("stop"),0);
-	class_addmethod(hid_class,(t_method) hid_stop,gensym("nopoll"),0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_build_device_list,gensym("refresh"),0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_print,gensym("print"),0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_open,gensym("open"),A_SYMBOL,0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_close,gensym("close"),0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_start,gensym("start"),A_DEFFLOAT,0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_start,gensym("poll"),A_DEFFLOAT,0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_stop,gensym("stop"),0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_stop,gensym("nopoll"),0);
 	
 	// MWS
-	class_addmethod(hid_class,(t_method) hid_grab,gensym("grab"),0);
-	class_addmethod(hid_class,(t_method) hid_ungrab,gensym("ungrab"),0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_grab,gensym("grab"),0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_ungrab,gensym("ungrab"),0);
 	
    /* force feedback messages */
-	class_addmethod(hid_class,(t_method) hid_ff_autocenter,
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_ff_autocenter,
 						 gensym("ff_autocenter"),A_DEFFLOAT,0);
-	class_addmethod(hid_class,(t_method) hid_ff_gain,gensym("ff_gain"),A_DEFFLOAT,0);
-	class_addmethod(hid_class,(t_method) hid_ff_motors,gensym("ff_motors"),A_DEFFLOAT,0);
-	class_addmethod(hid_class,(t_method) hid_ff_continue,gensym("ff_continue"),0);
-	class_addmethod(hid_class,(t_method) hid_ff_pause,gensym("ff_pause"),0);
-	class_addmethod(hid_class,(t_method) hid_ff_reset,gensym("ff_reset"),0);
-	class_addmethod(hid_class,(t_method) hid_ff_stopall,gensym("ff_stopall"),0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_ff_gain,gensym("ff_gain"),A_DEFFLOAT,0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_ff_motors,gensym("ff_motors"),A_DEFFLOAT,0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_ff_continue,gensym("ff_continue"),0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_ff_pause,gensym("ff_pause"),0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_ff_reset,gensym("ff_reset"),0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_ff_stopall,gensym("ff_stopall"),0);
 	/* ff tests */
-	class_addmethod(hid_class,(t_method) hid_ff_fftest,gensym("fftest"),A_DEFFLOAT,0);
-	class_addmethod(hid_class,(t_method) hid_ff_print,gensym("ff_print"),0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_ff_fftest,gensym("fftest"),A_DEFFLOAT,0);
+	class_addmethod(hid_grabber_class,(t_method) hid_grabber_ff_print,gensym("ff_print"),0);
 }
 

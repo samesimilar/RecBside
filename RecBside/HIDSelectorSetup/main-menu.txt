@@ -1,3 +1,4 @@
 <---\ Go\ Home
 Select\ HID\ Device
+Reload
 ======

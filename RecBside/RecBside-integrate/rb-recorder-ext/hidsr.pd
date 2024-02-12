@@ -1,0 +1,4 @@
+#N canvas 172 423 581 458 10;
+#X declare -path hidsr-ext;
+#X obj 17 15 declare -path hidsr-ext;
+#X obj 79 77 hidsr-main /sdcard/HIDSelector-Config.txt;

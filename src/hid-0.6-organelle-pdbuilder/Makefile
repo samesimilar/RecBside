@@ -1,6 +1,6 @@
 # Makefile for Organelle Synth
 
-lib.name = hid
+lib.name = hid_grabber
 
 
 $(lib.name).class.sources = hid.c hid_linux.c input_arrays.c

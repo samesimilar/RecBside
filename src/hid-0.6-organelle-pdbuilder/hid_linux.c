@@ -47,27 +47,27 @@
 /* LINUX-SPECIFIC SUPPORT FUNCTIONS */
 /* ------------------------------------------------------------------------------ */
 
-void hid_convert_linux_buttons_to_numbers(__u16 linux_code, char *hid_code)
+void hid_grabber_convert_linux_buttons_to_numbers(__u16 linux_code, char *hid_grabber_code)
 {
 	if(linux_code >= 0x100) 
 	{
 		if(linux_code < BTN_MOUSE)   
-			sprintf(hid_code,"btn_%d",linux_code - BTN_MISC);  /* numbered buttons */
+			sprintf(hid_grabber_code,"btn_%d",linux_code - BTN_MISC);  /* numbered buttons */
 		else if(linux_code < BTN_JOYSTICK)
-			sprintf(hid_code,"btn_%d",linux_code - BTN_MOUSE);  /* mouse buttons */
+			sprintf(hid_grabber_code,"btn_%d",linux_code - BTN_MOUSE);  /* mouse buttons */
 		else if(linux_code < BTN_GAMEPAD)
-			sprintf(hid_code,"btn_%d",linux_code - BTN_JOYSTICK);  /* joystick buttons */
+			sprintf(hid_grabber_code,"btn_%d",linux_code - BTN_JOYSTICK);  /* joystick buttons */
 		else if(linux_code < BTN_DIGI)
-			sprintf(hid_code,"btn_%d",linux_code - BTN_GAMEPAD);  /* gamepad buttons */
+			sprintf(hid_grabber_code,"btn_%d",linux_code - BTN_GAMEPAD);  /* gamepad buttons */
 		else if(linux_code < BTN_WHEEL)
-			sprintf(hid_code,"btn_%d",linux_code - BTN_DIGI);  /* tablet buttons */
+			sprintf(hid_grabber_code,"btn_%d",linux_code - BTN_DIGI);  /* tablet buttons */
 		else if(linux_code < KEY_OK)
-			sprintf(hid_code,"btn_%d",linux_code - BTN_WHEEL);  /* wheel buttons */
+			sprintf(hid_grabber_code,"btn_%d",linux_code - BTN_WHEEL);  /* wheel buttons */
 	}
 }
 
 /* Georg Holzmann: implementation of the keys */
-void hid_convert_linux_keys(__u16 linux_code, char *hid_code)
+void hid_grabber_convert_linux_keys(__u16 linux_code, char *hid_grabber_code)
 {  
   if(linux_code > 226)
     return;
@@ -114,10 +114,10 @@ void hid_convert_linux_keys(__u16 linux_code, char *hid_code)
     "cancel", "brightnessdown", "brightnessup", "media"
   };
   
-  sprintf(hid_code,"key_%s",key_names[linux_code]);
+  sprintf(hid_grabber_code,"key_%s",key_names[linux_code]);
 }
 
-void hid_print_element_list(t_hid *x)
+void hid_grabber_print_element_list(t_hid_grabber *x)
 {
 	unsigned long bitmask[EV_MAX][NBITS(KEY_MAX)];
 	char device_name[256] = "Unknown";
@@ -174,11 +174,11 @@ void hid_print_element_list(t_hid *x)
 			  {
 				  if ((event_type == EV_KEY) && (event_code >= BTN_MISC) && (event_code < KEY_OK) )
 				  {
-					  char hid_code[7];
-					  hid_convert_linux_buttons_to_numbers(event_code,hid_code);
+					  char hid_grabber_code[7];
+					  hid_grabber_convert_linux_buttons_to_numbers(event_code,hid_grabber_code);
 					  post("  %s\t%s\t%s",
 							 ev[event_type] ? ev[event_type] : "?", 
-							 hid_code,
+							 hid_grabber_code,
 							 event_names[event_type] ? (event_names[event_type][event_code] ? event_names[event_type][event_code] : "?") : "?");
 				  }
 				  else
@@ -229,7 +229,7 @@ void hid_print_element_list(t_hid *x)
 }
 
 
-void hid_print_device_list(void)
+void hid_grabber_print_device_list(void)
 {
 	int i,fd;
 	char device_output_string[256] = "Unknown";
@@ -266,43 +266,43 @@ void hid_print_device_list(void)
 /* ------------------------------------------------------------------------------ */
 
 /* cross-platform force feedback functions */
-t_int hid_ff_autocenter( t_hid *x, t_float value )
+t_int hid_grabber_ff_autocenter( t_hid_grabber *x, t_float value )
 {
 	return ( 0 );
 }
 
 
-t_int hid_ff_gain( t_hid *x, t_float value )
+t_int hid_grabber_ff_gain( t_hid_grabber *x, t_float value )
 {
 	return ( 0 );
 }
 
 
-t_int hid_ff_motors( t_hid *x, t_float value )
+t_int hid_grabber_ff_motors( t_hid_grabber *x, t_float value )
 {
 	return ( 0 );
 }
 
 
-t_int hid_ff_continue( t_hid *x )
+t_int hid_grabber_ff_continue( t_hid_grabber *x )
 {
 	return ( 0 );
 }
 
 
-t_int hid_ff_pause( t_hid *x )
+t_int hid_grabber_ff_pause( t_hid_grabber *x )
 {
 	return ( 0 );
 }
 
 
-t_int hid_ff_reset( t_hid *x )
+t_int hid_grabber_ff_reset( t_hid_grabber *x )
 {
 	return ( 0 );
 }
 
 
-t_int hid_ff_stopall( t_hid *x )
+t_int hid_grabber_ff_stopall( t_hid_grabber *x )
 {
 	return ( 0 );
 }
@@ -310,13 +310,13 @@ t_int hid_ff_stopall( t_hid *x )
 
 
 // these are just for testing...
-t_int hid_ff_fftest ( t_hid *x, t_float value)
+t_int hid_grabber_ff_fftest ( t_hid_grabber *x, t_float value)
 {
 	return ( 0 );
 }
 
 
-void hid_ff_print( t_hid *x )
+void hid_grabber_ff_print( t_hid_grabber *x )
 {
 }
 
@@ -326,9 +326,9 @@ void hid_ff_print( t_hid *x )
 /* Pd [hid] FUNCTIONS */
 /* ------------------------------------------------------------------------------ */
 
-t_int hid_get_events(t_hid *x)
+t_int hid_grabber_get_events(t_hid_grabber *x)
 {
-	DEBUG(post("hid_get_events"););
+	DEBUG(post("hid_grabber_get_events"););
 
 /*	for debugging, counts how many events are processed each time hid_read() is called */
 	t_int i;
@@ -336,33 +336,33 @@ t_int hid_get_events(t_hid *x)
 	t_int read_bytes;
 	t_atom event_data[3];
 
-	char hid_code[7];
+	char hid_grabber_code[7];
 
 /* this will go into the generic read function declared in hid.h and
  * implemented in hid_linux.c 
  */
-	struct input_event hid_input_event;
+	struct input_event hid_grabber_input_event;
 
 	if (x->x_fd < 0) return 0;
 
-	while (read (x->x_fd, &(hid_input_event), sizeof(struct input_event)) > -1)
+	while (read (x->x_fd, &(hid_grabber_input_event), sizeof(struct input_event)) > -1)
 	{
-		if (hid_input_event.type == EV_KEY)
+		if (hid_grabber_input_event.type == EV_KEY)
 		{
-			hid_convert_linux_buttons_to_numbers(hid_input_event.code,hid_code);
-			hid_convert_linux_keys(hid_input_event.code,hid_code);
+			hid_grabber_convert_linux_buttons_to_numbers(hid_grabber_input_event.code,hid_grabber_code);
+			hid_grabber_convert_linux_keys(hid_grabber_input_event.code,hid_grabber_code);
 		}
-		else if (event_names[hid_input_event.type][hid_input_event.code] != NULL) 
+		else if (event_names[hid_grabber_input_event.type][hid_grabber_input_event.code] != NULL) 
 		{
-			strcpy(hid_code, event_names[hid_input_event.type][hid_input_event.code]);
+			strcpy(hid_grabber_code, event_names[hid_grabber_input_event.type][hid_grabber_input_event.code]);
 		}
 		else 
 		{
-			strcpy(hid_code, "unknown");
+			strcpy(hid_grabber_code, "unknown");
 		}
 		
-		hid_output_event(x, ev[hid_input_event.type], hid_code, 
-							  (t_float)hid_input_event.value);
+		hid_grabber_output_event(x, ev[hid_grabber_input_event.type], hid_grabber_code, 
+							  (t_float)hid_grabber_input_event.value);
 		DEBUG(++event_counter;);
 	}
 	DEBUG(
@@ -374,35 +374,35 @@ t_int hid_get_events(t_hid *x)
 }
 
 
-void hid_print(t_hid* x)
+void hid_grabber_print(t_hid_grabber* x)
 {
-	hid_print_device_list();
-	hid_print_element_list(x);
+	hid_grabber_print_device_list();
+	hid_grabber_print_element_list(x);
 }
 
-t_int hid_grab_device(t_hid *x)
+t_int hid_grabber_grab_device(t_hid_grabber *x)
 {
     // MWS 
     if (ioctl(x->x_fd, EVIOCGRAB, GRAB))
     {
-        error("[hid] Cannot grab.\n");
+        error("[hid_grabber] Cannot grab.\n");
         return 1;
     }
 	return 0;
 }
 
-t_int hid_ungrab_device(t_hid *x)
+t_int hid_grabber_ungrab_device(t_hid_grabber *x)
 {
 	return ioctl(x->x_fd, EVIOCGRAB, UNGRAB);
 }
 
-t_int hid_open_device(t_hid *x, t_symbol *device_name)
+t_int hid_grabber_open_device(t_hid_grabber *x, t_symbol *device_name)
 {
-	DEBUG(post("hid_open_device"););
+	DEBUG(post("hid_grabber_open_device"););
 
 	// char device_name[256] = "Unknown";
 	char dev_handle_name[256] = "/dev/input/by-id";
-	struct input_event hid_input_event;
+	struct input_event hid_grabber_input_event;
 	char device_output_string[256] = "Unknown";
 	
 	x->x_fd = -1;
@@ -417,17 +417,17 @@ t_int hid_open_device(t_hid *x, t_symbol *device_name)
 	char buf[256];
 	ssize_t link_name_size = readlink(dev_handle_name, buf, sizeof(buf));
 	if (link_name_size == -1) {
-		error("[hid] path %s is not recognized as a link", dev_handle_name);
+		error("[hid_grabber] path %s is not recognized as a link", dev_handle_name);
 		return 1;
 	}
-	post("[hid] '%s' points to '%.*s'\n", dev_handle_name, (int) link_name_size, buf);
+	post("[hid_grabber] '%s' points to '%.*s'\n", dev_handle_name, (int) link_name_size, buf);
 // ../event
 	if (link_name_size < 8) {
-		error("[hid] device %s is not linked to an event file in /dev/input", dev_handle_name);
+		error("[hid_grabber] device %s is not linked to an event file in /dev/input", dev_handle_name);
 		return 1;
 	}
 	if (!(buf[0] == '.' && buf[1] == '.' && buf[2] == '/' && buf[3] == 'e' && buf[4] == 'v' && buf[5] == 'e' && buf[6] == 'n' && buf[7] == 't')) {
-		error("[hid] device %s is not linked to an event file in /dev/input", dev_handle_name);
+		error("[hid_grabber] device %s is not linked to an event file in /dev/input", dev_handle_name);
 		return 1;
 	}
   if (dev_handle_name) 
@@ -437,7 +437,7 @@ t_int hid_open_device(t_hid *x, t_symbol *device_name)
 	  /* test if device open */
 	  if (x->x_fd < 0 ) 
 	  { 
-		  error("[hid] open %s failed",dev_handle_name);
+		  error("[hid_grabber] open %s failed",dev_handle_name);
 		  x->x_fd = -1;
 		  return 1;
 	  }
@@ -449,14 +449,14 @@ t_int hid_open_device(t_hid *x, t_symbol *device_name)
   /* read input_events from the HID_DEVICE stream 
    * It seems that is just there to flush the input event queue
    */
-  while (read (x->x_fd, &(hid_input_event), sizeof(struct input_event)) > -1);
+  while (read (x->x_fd, &(hid_grabber_input_event), sizeof(struct input_event)) > -1);
 
 
   /* get name of device */
   // ioctl(x->x_fd, EVIOCGNAME(sizeof(device_name)), device_name);
   // post ("[hid] opened device %d (%s): %s",
 		  // x->x_device_number,dev_handle_name,device_name);
-	post ("[hid] opened device %s", dev_handle_name);
+	post ("[hid_grabber] opened device %s", dev_handle_name);
 
   return (0);
 }
@@ -464,9 +464,9 @@ t_int hid_open_device(t_hid *x, t_symbol *device_name)
 /*
  * Under GNU/Linux, the device is a filehandle
  */
-t_int hid_close_device(t_hid *x)
+t_int hid_grabber_close_device(t_hid_grabber *x)
 {
-	DEBUG(post("hid_close_device"););
+	DEBUG(post("hid_grabber_close_device"););
    if (x->x_fd <0) 
 		return 0;
 	else {
@@ -476,9 +476,9 @@ t_int hid_close_device(t_hid *x)
 		
 }
 
-t_int hid_build_device_list(t_hid *x)
+t_int hid_grabber_build_device_list(t_hid_grabber *x)
 {
-	DEBUG(post("hid_build_device_list"););
+	DEBUG(post("hid_grabber_build_device_list"););
 	/* the device list should be refreshed here */
 /*
  *	since in GNU/Linux the device list is the input event devices 
@@ -490,7 +490,7 @@ t_int hid_build_device_list(t_hid *x)
 	return (0);
 }
 
-void hid_platform_specific_free(t_hid *x)
+void hid_grabber_platform_specific_free(t_hid_grabber *x)
 {
 	/* nothing to be done here on GNU/Linux */
 }
